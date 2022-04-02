@@ -4,11 +4,15 @@
   "description": "OAuth2.0 practice",
   "main": "index.js",
   "scripts": {
+    "start": "npm run migrate up && node index.js",
+    "migrate": "node-pg-migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cookie-session": "^2.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
     "node-pg-migrate": "^6.2.1",

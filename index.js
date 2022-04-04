@@ -17,6 +17,7 @@ app.use(jsonParser);
 app.use(urlencodedParser);
 
 app.post("/login/line", userController.lineLogin)
+app.post("/user/userInfo", userController.getUserInfo)
 
 app.listen(port, () => {
   db.connect();

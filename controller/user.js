@@ -66,13 +66,22 @@ const userController = {
       const { userId, displayName, pictureUrl } = await getUserInfo(access_token)
       const token = tokenHandler.createJWT({ user_platform_id: userId })
 
+      // 確認 user 是否已存在
       const checkUserResult = await userModel.checkUser({ user_platform_id: userId })
+
+      // user 已存在，更新 token
       if (checkUserResult) {
+        const updateUserResult = await userModel.updateLineUserToken({ access_token, user_platform_id: userId })
         json = {
-          success: false,
-          error: "user exisest"
+          success: true,
+          userInfo: {
+            name: displayName,
+            avatar: pictureUrl
+          }
         }
-        return res.status(400).json(json)
+        res.setHeader("Access-Control-Expose-Headers", "Authorization")
+        res.setHeader("Authorization", "Bearer " + token);
+        return res.status(200).json(json)
       }
 
       const createUserResult = await userModel.createLineUser({
@@ -95,9 +104,42 @@ const userController = {
           avatar: pictureUrl
         }
       }
-      res.setHeader('Authorization', 'Bearer '+ token); 
+      res.setHeader('Authorization', 'Bearer ' + token);
       return res.status(200).json(json)
     }
+  },
+  getUserInfo: async (req, res) => {
+    let json;
+    // tokenHandler.verify(req.)
+    const token = req.header('authorization') || false
+    if (token) {
+      const user_platform_id = tokenHandler.verifyJWT(token)
+      const result = await userModel.getUserInfo({ user_platform_id })
+      if (result.rowCount > 0) {
+        const access_token = result.rows[0].login_access_token
+        const userInfo = await getUserInfo(access_token)
+        json = {
+          success: true,
+          userInfo
+        }
+
+        return res.status(200).json(json)
+      } else {
+        json = {
+          success: false,
+          err: "user not exist"
+        }
+        return res.status(400).json(json)
+      }
+
+    } else {
+      json = {
+        success: false,
+        err: "token required"
+      }
+      return res.status(400).json(json)
+    }
+    console.log("req.header('authorization');", req.header('authorization'));
   }
 }
 

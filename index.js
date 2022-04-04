@@ -16,6 +16,7 @@ app.use(cors(corsOptions))
 app.use(jsonParser);
 app.use(urlencodedParser);
 
+app.post("/login/line", userController.lineLogin)
 
 app.listen(port, () => {
   db.connect();

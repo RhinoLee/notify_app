@@ -29,9 +29,9 @@ async function getAccessToken(code) {
   }
 }
 
-async function getUserLineInfo(acces_token) {
+async function getUserLineInfo(access_token) {
   const headers = {
-    Authorization: `Bearer ${acces_token}`
+    Authorization: `Bearer ${access_token}`
   }
 
   try {
@@ -39,6 +39,31 @@ async function getUserLineInfo(acces_token) {
     return result.data
   } catch (err) {
     console.log("getUserInfo result err", err);
+    return false
+  }
+}
+
+async function lineLogout(access_token) {
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  }
+  const params = {
+    access_token,
+    client_id: process.env.LINE_LOGIN_ID,
+    client_secret: process.env.LINE_LOGIN_SECRET,
+  }
+
+  const searchParams = new URLSearchParams()
+  Object.keys(params).forEach((key) => {
+    searchParams.append(key, params[key])
+  })
+
+
+  try {
+    const result = await axios.post("https://api.line.me/oauth2/v2.1/revoke", searchParams, { headers })
+    return true
+  } catch (err) {
+    console.log("get Access Token result err", err);
     return false
   }
 }
@@ -70,8 +95,8 @@ const userController = {
         json = {
           success: true,
           userInfo: {
-            name: displayName,
-            avatar: pictureUrl
+            displayName,
+            pictureUrl
           }
         }
         res.setHeader("Access-Control-Expose-Headers", "Authorization")
@@ -96,8 +121,8 @@ const userController = {
       json = {
         success: true,
         userInfo: {
-          name: displayName,
-          avatar: pictureUrl
+          displayName,
+          pictureUrl
         }
       }
       res.setHeader('Authorization', 'Bearer ' + token);
@@ -106,34 +131,58 @@ const userController = {
   },
   getUserInfo: async (req, res) => {
     let json;
-    const token = req.header('authorization') || false
-    if (token) {
-      const user_platform_id = tokenHandler.verifyJWT(token)
-      const result = await userModel.getUserInfo({ user_platform_id })
-      if (result.rowCount > 0) {
-        const access_token = result.rows[0].login_access_token
-        const userInfo = await getUserInfo(access_token)
-        json = {
-          success: true,
-          userInfo
-        }
-
-        return res.status(200).json(json)
-      }
-
+    const token = req.header('authorization')
+    const user_platform_id = tokenHandler.verifyJWT(token)
+    const result = await userModel.getUserInfo({ user_platform_id })
+    if (result.rowCount > 0) {
+      const access_token = result.rows[0].login_access_token
+      const userInfo = await getUserLineInfo(access_token)
       json = {
-        success: false,
-        err: "user not exist"
+        success: true,
+        userInfo
       }
-      return res.status(404).json(json)
+
+      return res.status(200).json(json)
     }
 
     json = {
       success: false,
-      err: "token required"
+      err: "user not exist"
     }
-    return res.status(403).json(json)
+    return res.status(404).json(json)
+
+    // json = {
+    //   success: false,
+    //   err: "token required"
+    // }
+    // return res.status(403).json(json)
   },
+  lineLogout: async (req, res) => {
+    let json;
+    const token = req.header('authorization')
+    const user_platform_id = tokenHandler.verifyJWT(token)
+    const userInfoResult = await userModel.getUserInfo({ user_platform_id })
+    if (userInfoResult.rowCount > 0) {
+      const access_token = userInfoResult.rows[0].login_access_token
+
+      const lineLogoutResult = await lineLogout(access_token)
+      const userLogoutResult = await userModel.clearLoginAccessToken({ user_platform_id })
+
+      if (lineLogoutResult) {
+        json = {
+          success: true,
+        }
+
+        return res.status(200).json(json)
+      } else {
+        json = {
+          success: false,
+        }
+
+        return res.status(400).json(json)
+      }
+    }
+  }
 }
 
 module.exports = userController

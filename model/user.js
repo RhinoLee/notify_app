@@ -47,6 +47,21 @@ const userModel = {
       console.log("userModel.getUserInfo err", err);
       return err
     }
+  },
+  clearLoginAccessToken: async ({ user_platform_id }) => {
+    const query = {
+      text: `UPDATE users SET login_access_token = $1 WHERE user_platform_id=$2`,
+      values: ["", user_platform_id]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.clearLoginAccessToken result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.clearLoginAccessToken err", err);
+      return err
+    }
   }
 }
 

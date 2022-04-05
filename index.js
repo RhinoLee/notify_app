@@ -16,8 +16,23 @@ app.use(cors(corsOptions))
 app.use(jsonParser);
 app.use(urlencodedParser);
 
+function getReqToken(req, res, next) {
+  let json;
+  const token = req.header('authorization') || false
+  if (token) {
+    next()
+  } else {
+    json = {
+      success: false,
+      err: "token required"
+    }
+    return res.status(403).json(json)
+  }
+}
+
 app.post("/login/line", userController.lineLogin)
-app.post("/user/userInfo", userController.getUserInfo)
+app.post("/logout/line", getReqToken, userController.lineLogout)
+app.post("/user/userInfo", getReqToken, userController.getUserInfo)
 
 app.listen(port, () => {
   db.connect();

@@ -4,7 +4,9 @@ export const useUserStore = defineStore({
   id: 'counter',
   state: () => ({
     token: "",
-    userInfo: {}
+    isLogin: false,
+    userInfo: {},
+    lineLoginUrl: "",
   }),
   getters: {
   },

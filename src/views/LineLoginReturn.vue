@@ -3,10 +3,10 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from "axios"
 import { onMounted } from '@vue/runtime-core';
 import { useUserStore } from "@/stores/user";
+
 const route = useRoute()
 const router = useRouter()
-// line login return url
-// http://localhost:3000/login/line/return?code=qrBECMjylc1riaGfc3Mz&state=12345
+const userStore = useUserStore()
 const returnParams = {
   code: route.query.code || "",
   state: route.query.state || "",
@@ -17,14 +17,18 @@ async function lineLoginHandler() {
   const api = `${import.meta.env.VITE_BACKEND_HOST}/login/line`
   try {
     const result = await axios.post(api, { data: returnParams })
-    console.log("lineLoginHandler result.headers", result.headers);
-    console.log("lineLoginHandler result", result);
-    if (!result.data.success || !result.headers.authorization) return
+    if (!result.data.success || !result.headers.authorization) {
+      userStore.isLogin = false
+      return
+    }
     const token = result.headers.authorization.split(" ")[1]
     const { userInfo } = result.data
     localStorage.setItem("token", token)
-    useUserStore.userInfo = userInfo
+    userStore.userInfo = userInfo
+    console.log("userStore.userInfo = userInfo", userInfo);
+    userStore.isLogin = true
   } catch (err) {
+    userStore.isLogin = false
     console.log("lineLoginHandler err", err);
   } finally {
     router.push({

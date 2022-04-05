@@ -1,3 +1,24 @@
+<script setup>
+import axios from "axios"
+import { useUserStore } from "@/stores/user"
+import { storeToRefs } from 'pinia'
+
+const userStore = useUserStore()
+const { lineLoginUrl } = userStore
+const { isLogin, userInfo } = storeToRefs(userStore)
+
+async function logoutHandler() {
+  const api = `${import.meta.env.VITE_BACKEND_HOST}/logout/line`
+  axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
+  const result = await axios.post(api)
+
+  userStore.isLogin = false
+  userStore.token = ""
+  localStorage.removeItem("token");
+}
+
+</script>
+
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
@@ -23,17 +44,37 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="#">Home</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">Link</a>
-          </li>
+          </li>-->
         </ul>
         <div class="d-flex">
-          user
+          <!-- user -->
+          <template v-if="isLogin">
+            <div class="user-name">
+              <span>Hi, {{ userInfo.displayName }}</span>
+            </div>
+            <button @click="logoutHandler" class="ms-3">登出</button>
+          </template>
+          <a v-else :href="lineLoginUrl">Line Login</a>
         </div>
       </div>
     </div>
   </nav>
 </template>
+
+<style scoped>
+.user-name {
+  display: flex;
+  align-items: center;
+}
+button {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #d63384;
+}
+</style>

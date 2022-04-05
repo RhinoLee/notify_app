@@ -59,7 +59,7 @@ async function logoutHandler() {
             </div>
             <button @click="logoutHandler" class="ms-3">登出</button>
           </template>
-          <a v-else :href="lineLoginUrl">Line Login</a>
+          <a v-else :href="lineLoginUrl" class="login">Line Login</a>
         </div>
       </div>
     </div>
@@ -76,5 +76,15 @@ button {
   outline: none;
   background: transparent;
   color: #d63384;
+}
+.login {
+  display: block;
+  padding: 5px 10px;
+  background: #07b53b;
+  color: #FFF;
+  font-weight: bold;
+  text-decoration: none;
+  letter-spacing: 1px;
+  border-radius: 5px;
 }
 </style>

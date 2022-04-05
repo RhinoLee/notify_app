@@ -3,7 +3,11 @@ import { useUserStore } from "@/stores/user"
 import { storeToRefs } from 'pinia'
 
 const userStore = useUserStore()
-const { isLogin, userInfo } = storeToRefs(userStore)
+const { isLogin, userInfo, lineNotifyUrl } = storeToRefs(userStore)
+
+function cancelNotify() {
+  userStore.cancelNotify()
+}
 
 </script>
 
@@ -12,6 +16,9 @@ const { isLogin, userInfo } = storeToRefs(userStore)
     <div v-if="isLogin">
       <!-- <div>{{ userInfo.displayName }}</div> -->
       <div class="avatar"><img :src="userStore.userInfo.pictureUrl" alt=""></div>
+      <a :href="lineNotifyUrl" v-if="!userInfo.isNotify">訂閱通知</a>
+      <div v-if="userInfo.isNotify">已訂閱通知</div>
+      <button v-if="userInfo.isNotify" @click="cancelNotify">取消訂閱</button>
     </div>
   </div>
 </template>

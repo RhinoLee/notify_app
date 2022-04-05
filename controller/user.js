@@ -22,7 +22,6 @@ async function getAccessToken(code) {
 
   try {
     const result = await axios.post("https://api.line.me/oauth2/v2.1/token", searchParams, { headers })
-    console.log("get Access Token result.data", result.data);
     return result.data
   } catch (err) {
     console.log("get Access Token result err", err);
@@ -30,16 +29,13 @@ async function getAccessToken(code) {
   }
 }
 
-async function getUserInfo(acces_token) {
-  // https://api.line.me/v2/profile
+async function getUserLineInfo(acces_token) {
   const headers = {
     Authorization: `Bearer ${acces_token}`
   }
 
-
   try {
     const result = await axios.get("https://api.line.me/v2/profile", { headers })
-    console.log("getUserInfo result.data", result.data);
     return result.data
   } catch (err) {
     console.log("getUserInfo result err", err);
@@ -58,19 +54,18 @@ const userController = {
       json = {
         success: false,
       }
-      return res.status(400).json(json)
+      return res.status(403).json(json)
     }
 
     if (access_token) {
-      console.log("access_token", access_token);
-      const { userId, displayName, pictureUrl } = await getUserInfo(access_token)
+      const { userId, displayName, pictureUrl } = await getUserLineInfo(access_token)
       const token = tokenHandler.createJWT({ user_platform_id: userId })
 
       // 確認 user 是否已存在
-      const checkUserResult = await userModel.checkUser({ user_platform_id: userId })
+      const checkUserResult = await userModel.getUserInfo({ user_platform_id: userId })
 
       // user 已存在，更新 token
-      if (checkUserResult) {
+      if (checkUserResult.rowCount > 0) {
         const updateUserResult = await userModel.updateLineUserToken({ access_token, user_platform_id: userId })
         json = {
           success: true,
@@ -84,6 +79,7 @@ const userController = {
         return res.status(200).json(json)
       }
 
+      // user 不存在，新增 user
       const createUserResult = await userModel.createLineUser({
         access_token,
         user_platform_id: userId
@@ -110,7 +106,6 @@ const userController = {
   },
   getUserInfo: async (req, res) => {
     let json;
-    // tokenHandler.verify(req.)
     const token = req.header('authorization') || false
     if (token) {
       const user_platform_id = tokenHandler.verifyJWT(token)
@@ -124,23 +119,21 @@ const userController = {
         }
 
         return res.status(200).json(json)
-      } else {
-        json = {
-          success: false,
-          err: "user not exist"
-        }
-        return res.status(400).json(json)
       }
 
-    } else {
       json = {
         success: false,
-        err: "token required"
+        err: "user not exist"
       }
-      return res.status(400).json(json)
+      return res.status(404).json(json)
     }
-    console.log("req.header('authorization');", req.header('authorization'));
-  }
+
+    json = {
+      success: false,
+      err: "token required"
+    }
+    return res.status(403).json(json)
+  },
 }
 
 module.exports = userController

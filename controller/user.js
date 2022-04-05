@@ -2,7 +2,7 @@ const userModel = require("../model/user");
 const tokenHandler = require("../utils/token")
 const axios = require("axios")
 
-async function getAccessToken(code) {
+async function getLoginAccessToken(code) {
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
   }
@@ -22,6 +22,33 @@ async function getAccessToken(code) {
 
   try {
     const result = await axios.post("https://api.line.me/oauth2/v2.1/token", searchParams, { headers })
+    return result.data
+  } catch (err) {
+    console.log("get Access Token result err", err);
+    return false
+  }
+}
+
+async function getNotifyAccessToken(code) {
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  }
+  const params = {
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: "http://localhost:3000/notify/line/return",
+    client_id: process.env.LINE_NOTIFY_ID,
+    client_secret: process.env.LINE_NOTIFY_SECRET,
+  }
+
+  const searchParams = new URLSearchParams()
+  Object.keys(params).forEach((key) => {
+    searchParams.append(key, params[key])
+  })
+
+
+  try {
+    const result = await axios.post("https://notify-bot.line.me/oauth/token", searchParams, { headers })
     return result.data
   } catch (err) {
     console.log("get Access Token result err", err);
@@ -68,12 +95,28 @@ async function lineLogout(access_token) {
   }
 }
 
+async function lineCancelNotify(access_token) {
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Authorization': `Bearer ${access_token}`
+  }
+
+  try {
+    const result = await axios.post("https://notify-api.line.me/api/revoke", null, { headers })
+    console.log("lineCancelNotify result", result);
+    return true
+  } catch (err) {
+    console.log("lineCancelNotify err", err);
+    return false
+  }
+}
+
 const userController = {
   lineLogin: async (req, res) => {
     let json;
     const { code } = req.body.data
     // access_token, token_type, refresh_token, expires_in, scope, id_token
-    const { access_token } = await getAccessToken(code)
+    const { access_token } = await getLoginAccessToken(code)
 
     if (!access_token) {
       json = {
@@ -137,6 +180,7 @@ const userController = {
     if (result.rowCount > 0) {
       const access_token = result.rows[0].login_access_token
       const userInfo = await getUserLineInfo(access_token)
+      userInfo.isNotify = Boolean(result.rows[0].notify_access_token)
       json = {
         success: true,
         userInfo
@@ -156,6 +200,35 @@ const userController = {
     //   err: "token required"
     // }
     // return res.status(403).json(json)
+  },
+  lineNotify: async (req, res) => {
+    const { code } = req.body.data
+    const { access_token } = await getNotifyAccessToken(code)
+    const token = req.header('authorization')
+    const user_platform_id = tokenHandler.verifyJWT(token)
+
+    if (!access_token) {
+      json = {
+        success: false,
+      }
+      return res.status(403).json(json)
+    }
+
+    if (access_token) {
+      try {
+        const result = await userModel.updateUserNotify({ user_platform_id, access_token })
+        json = {
+          success: true,
+        }
+        return res.status(200).json(json)
+      } catch (err) {
+        json = {
+          success: false,
+          err
+        }
+        return res.status(403).json(json)
+      }
+    }
   },
   lineLogout: async (req, res) => {
     let json;
@@ -182,7 +255,59 @@ const userController = {
         return res.status(400).json(json)
       }
     }
-  }
+  },
+  lineLogout: async (req, res) => {
+    let json;
+    const token = req.header('authorization')
+    const user_platform_id = tokenHandler.verifyJWT(token)
+    const userInfoResult = await userModel.getUserInfo({ user_platform_id })
+    if (userInfoResult.rowCount > 0) {
+      const access_token = userInfoResult.rows[0].login_access_token
+
+      const lineLogoutResult = await lineLogout(access_token)
+      const userLogoutResult = await userModel.clearLoginAccessToken({ user_platform_id })
+
+      if (lineLogoutResult) {
+        json = {
+          success: true,
+        }
+
+        return res.status(200).json(json)
+      } else {
+        json = {
+          success: false,
+        }
+
+        return res.status(400).json(json)
+      }
+    }
+  },
+  cancelNotify: async (req, res) => {
+    let json;
+    const token = req.header('authorization')
+    const user_platform_id = tokenHandler.verifyJWT(token)
+    const userInfoResult = await userModel.getUserInfo({ user_platform_id })
+    if (userInfoResult.rowCount > 0) {
+      const access_token = userInfoResult.rows[0].notify_access_token
+
+      const lineCancelResult = await lineCancelNotify(access_token)
+      const userCancelResult = await userModel.cancelNotify({ user_platform_id })
+
+      if (userCancelResult) {
+        json = {
+          success: true,
+        }
+
+        return res.status(200).json(json)
+      } else {
+        json = {
+          success: false,
+        }
+
+        return res.status(400).json(json)
+      }
+    }
+  },
 }
 
 module.exports = userController

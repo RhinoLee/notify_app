@@ -35,7 +35,7 @@ const userModel = {
   },
   getUserInfo: async ({ user_platform_id }) => {
     const query = {
-      text: `SELECT login_access_token FROM users WHERE user_platform_id=$1`,
+      text: `SELECT login_access_token, notify_access_token FROM users WHERE user_platform_id=$1`,
       values: [user_platform_id]
     }
 
@@ -45,6 +45,21 @@ const userModel = {
       return result
     } catch (err) {
       console.log("userModel.getUserInfo err", err);
+      return err
+    }
+  },
+  updateUserNotify: async ({ access_token, user_platform_id }) => {
+    const query = {
+      text: `UPDATE users SET notify_access_token = $1 WHERE user_platform_id = $2`,
+      values: [access_token, user_platform_id]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.updateUserNotify result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.updateUserNotify err", err);
       return err
     }
   },
@@ -62,7 +77,22 @@ const userModel = {
       console.log("userModel.clearLoginAccessToken err", err);
       return err
     }
-  }
+  },
+  cancelNotify: async ({ user_platform_id }) => {
+    const query = {
+      text: `UPDATE users SET notify_access_token = $1 WHERE user_platform_id=$2`,
+      values: ["", user_platform_id]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.cancelNotify result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.cancelNotify err", err);
+      return err
+    }
+  },
 }
 
 module.exports = userModel

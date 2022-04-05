@@ -33,6 +33,8 @@ function getReqToken(req, res, next) {
 app.post("/login/line", userController.lineLogin)
 app.post("/logout/line", getReqToken, userController.lineLogout)
 app.post("/user/userInfo", getReqToken, userController.getUserInfo)
+app.post("/notify/line", getReqToken, userController.lineNotify)
+app.post("/notify/line/cancel", getReqToken, userController.cancelNotify)
 
 app.listen(port, () => {
   db.connect();

@@ -111,6 +111,37 @@ async function lineCancelNotify(access_token) {
   }
 }
 
+async function notifyPost(tokens) {
+  let promises = []
+  tokens.forEach(async (token) => {
+    console.log("token", token);
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${token.notify_access_token}`
+    }
+
+    const params = {
+      message: "yoyo"
+    }
+
+    const searchParams = new URLSearchParams()
+    Object.keys(params).forEach((key) => {
+      searchParams.append(key, params[key])
+    })
+
+    promises.push(axios.post("https://notify-api.line.me/api/notify", searchParams, { headers }))
+  })
+
+  try {
+    const result = await Promise.all(promises)
+    console.log("notifyPost result", result);
+    return true
+  } catch (err) {
+    console.log("notifyPost err", err);
+    return false
+  }
+}
+
 const userController = {
   lineLogin: async (req, res) => {
     let json;
@@ -172,22 +203,43 @@ const userController = {
       return res.status(200).json(json)
     }
   },
+  lineLogout: async (req, res) => {
+    let json;
+    const token = req.header('authorization')
+    const user_platform_id = tokenHandler.verifyJWT(token)
+    const userInfoResult = await userModel.getUserInfo({ user_platform_id })
+    const access_token = userInfoResult.rows[0].login_access_token
+    const lineLogoutResult = await lineLogout(access_token)
+    const userLogoutResult = await userModel.clearLoginAccessToken({ user_platform_id })
+
+    if (lineLogoutResult) {
+      json = {
+        success: true,
+      }
+
+      return res.status(200).json(json)
+    } else {
+      json = {
+        success: false,
+      }
+
+      return res.status(400).json(json)
+    }
+  },
   getUserInfo: async (req, res) => {
     let json;
     const token = req.header('authorization')
     const user_platform_id = tokenHandler.verifyJWT(token)
     const result = await userModel.getUserInfo({ user_platform_id })
-    if (result.rowCount > 0) {
-      const access_token = result.rows[0].login_access_token
-      const userInfo = await getUserLineInfo(access_token)
-      userInfo.isNotify = Boolean(result.rows[0].notify_access_token)
-      json = {
-        success: true,
-        userInfo
-      }
-
-      return res.status(200).json(json)
+    const access_token = result.rows[0].login_access_token
+    const userInfo = await getUserLineInfo(access_token)
+    userInfo.isNotify = Boolean(result.rows[0].notify_access_token)
+    json = {
+      success: true,
+      userInfo
     }
+
+    return res.status(200).json(json)
 
     json = {
       success: false,
@@ -230,82 +282,52 @@ const userController = {
       }
     }
   },
-  lineLogout: async (req, res) => {
+  lineNotifyPost: async (req, res) => {
     let json;
-    const token = req.header('authorization')
-    const user_platform_id = tokenHandler.verifyJWT(token)
-    const userInfoResult = await userModel.getUserInfo({ user_platform_id })
-    if (userInfoResult.rowCount > 0) {
-      const access_token = userInfoResult.rows[0].login_access_token
-
-      const lineLogoutResult = await lineLogout(access_token)
-      const userLogoutResult = await userModel.clearLoginAccessToken({ user_platform_id })
-
-      if (lineLogoutResult) {
+    const result = await userModel.getNotifyUsers()
+    if (result && Array.isArray(result.rows) && result.rows.length > 0) {
+      const postResult = await notifyPost(result.rows)
+      if (postResult) {
         json = {
           success: true,
         }
-
         return res.status(200).json(json)
-      } else {
-        json = {
-          success: false,
-        }
-
-        return res.status(400).json(json)
       }
-    }
-  },
-  lineLogout: async (req, res) => {
-    let json;
-    const token = req.header('authorization')
-    const user_platform_id = tokenHandler.verifyJWT(token)
-    const userInfoResult = await userModel.getUserInfo({ user_platform_id })
-    if (userInfoResult.rowCount > 0) {
-      const access_token = userInfoResult.rows[0].login_access_token
 
-      const lineLogoutResult = await lineLogout(access_token)
-      const userLogoutResult = await userModel.clearLoginAccessToken({ user_platform_id })
-
-      if (lineLogoutResult) {
-        json = {
-          success: true,
-        }
-
-        return res.status(200).json(json)
-      } else {
-        json = {
-          success: false,
-        }
-
-        return res.status(400).json(json)
+      json = {
+        success: false,
+        err: postResult
       }
+      return res.status(400).json(json)
     }
+
+    json = {
+      success: false,
+      err: "no user exist"
+    }
+    return res.status(400).json(json)
   },
   cancelNotify: async (req, res) => {
     let json;
     const token = req.header('authorization')
     const user_platform_id = tokenHandler.verifyJWT(token)
     const userInfoResult = await userModel.getUserInfo({ user_platform_id })
-    if (userInfoResult.rowCount > 0) {
-      const access_token = userInfoResult.rows[0].notify_access_token
+    const access_token = userInfoResult.rows[0].notify_access_token
+    const lineCancelResult = await lineCancelNotify(access_token)
+    const userCancelResult = await userModel.cancelNotify({ user_platform_id })
 
-      const lineCancelResult = await lineCancelNotify(access_token)
-      const userCancelResult = await userModel.cancelNotify({ user_platform_id })
-
-      if (userCancelResult) {
-        json = {
-          success: true,
-        }
-
-        return res.status(200).json(json)
-      } else {
-        json = {
-          success: false,
-        }
-
-        return res.status(400).json(json)
+    if (userCancelResult) {
+      json = {
+        success: true,
       }
+
+      return res.status(200).json(json)
+    } else {
+      json = {
+        success: false,
+      }
+
+      return res.status(400).json(json)
     }
   },
 }

@@ -81,7 +81,7 @@ const userModel = {
   cancelNotify: async ({ user_platform_id }) => {
     const query = {
       text: `UPDATE users SET notify_access_token = $1 WHERE user_platform_id=$2`,
-      values: ["", user_platform_id]
+      values: [null, user_platform_id]
     }
 
     try {
@@ -93,6 +93,20 @@ const userModel = {
       return err
     }
   },
+  getNotifyUsers: async () => {
+    const query = {
+      text: "SELECT notify_access_token FROM users WHERE notify_access_token IS NOT NULL;"
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.getNotifyUsers result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.getNotifyUsers err", err);
+      return err
+    }
+  }
 }
 
 module.exports = userModel

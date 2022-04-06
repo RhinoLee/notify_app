@@ -1,5 +1,4 @@
 <script setup>
-import axios from "axios"
 import { useUserStore } from "@/stores/user"
 import { storeToRefs } from 'pinia'
 
@@ -8,13 +7,7 @@ const { lineLoginUrl } = userStore
 const { isLogin, userInfo } = storeToRefs(userStore)
 
 async function logoutHandler() {
-  const api = `${import.meta.env.VITE_BACKEND_HOST}/logout/line`
-  axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
-  const result = await axios.post(api)
-
-  userStore.isLogin = false
-  userStore.token = ""
-  localStorage.removeItem("token");
+  userStore.logoutHandler()
 }
 
 </script>

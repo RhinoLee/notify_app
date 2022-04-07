@@ -13,6 +13,7 @@ if (process.env.NODE_ENV === "development") {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   })
+  module.exports = pool;
 } else {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -20,6 +21,6 @@ if (process.env.NODE_ENV === "development") {
       rejectUnauthorized: false,
     },
   })
+  module.exports = pool;
 }
 
-module.exports = pool;

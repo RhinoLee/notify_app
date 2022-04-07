@@ -24,6 +24,9 @@ export const useUserStore = defineStore({
     },
     lineLoginUrl: "",
     lineNotifyUrl: "",
+    adminAccount: "",
+    adminPassword: "",
+
   }),
   getters: {
     lineLoginUrl(state) {
@@ -43,7 +46,7 @@ export const useUserStore = defineStore({
     async lineNotifyHandler(returnParams) {
       if (!returnParams.code || !returnParams.state) return
       console.log("returnParams", returnParams);
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/notify/line`
+      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/notify`
       try {
         const result = await axios.post(api, { data: returnParams })
         this.userInfo.isNotify = result.data.success
@@ -59,7 +62,7 @@ export const useUserStore = defineStore({
     async cancelNotify() {
       const token = localStorage.getItem("token")
       if (token) {
-        const api = `${import.meta.env.VITE_BACKEND_HOST}/notify/line/cancel`
+        const api = `${import.meta.env.VITE_BACKEND_HOST}/line/notify/cancel`
         axios.defaults.headers.post['Authorization'] = token;
         const result = await axios.post(api)
       }
@@ -67,7 +70,7 @@ export const useUserStore = defineStore({
     },
     async lineLoginHandler(returnParams) {
       if (!returnParams.code || !returnParams.state) return
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/login/line`
+      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/login`
       try {
         const result = await axios.post(api, { data: returnParams })
         if (!result.data.success || !result.headers.authorization) {
@@ -89,17 +92,19 @@ export const useUserStore = defineStore({
       }
     },
     async logoutHandler() {
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/logout/line`
+      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/logout`
       axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
       const result = await axios.post(api)
 
       this.isLogin = false
       this.token = ""
+      this.userInfo = {}
       localStorage.removeItem("token");
     },
     async getUserInfo() {
       const token = localStorage.getItem("token")
-      if (token) {
+      const role = localStorage.getItem("role")
+      if (token && !role) {
         const api = `${import.meta.env.VITE_BACKEND_HOST}/user/userInfo`
         axios.defaults.headers.post['Authorization'] = token;
         const result = await axios.post(api)
@@ -107,7 +112,40 @@ export const useUserStore = defineStore({
         this.userInfo = result.data.userInfo
         return
       }
+      if (token && role) {
+        this.adminLogin()
+        return 
+      }
       this.isLogin = false
     },
+    async postNotify() {
+      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/notify/post`
+      axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
+      const result = await axios.post(api)
+    },
+    async adminLogin() {
+      const api = `${import.meta.env.VITE_BACKEND_HOST}/admin/login`
+      const payload = {
+        adminAccount: this.adminAccount,
+        adminPassword: this.adminPassword
+      }
+      axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
+      const result = await axios.post(api, { data: payload })
+      if (result.data.success) {
+        const token = result.headers.authorization.split(" ")[1]
+        localStorage.setItem("token", token)
+        localStorage.setItem("role", result.data.role)
+        this.isLogin = true
+        this.userInfo.displayName = "Admin"
+        this.userInfo.role = result.data.role
+      }
+      return result.data.success
+    },
+    async adminLogout() {
+      this.isLogin = false
+      this.userInfo = {}
+      localStorage.removeItem("token")
+      localStorage.removeItem("role")
+    }
   }
 })

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from "axios"
+import { lineNotifySubscribe, lineNotifyCancel, lineLogin, lineLogout, getUserInfo, linePostNotify, adminLogin, adminLogout } from "@/utils/api"
 
 export const useUserStore = defineStore({
   id: 'counter',
@@ -46,9 +47,8 @@ export const useUserStore = defineStore({
     async lineNotifyHandler(returnParams) {
       if (!returnParams.code || !returnParams.state) return
       console.log("returnParams", returnParams);
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/notify`
       try {
-        const result = await axios.post(api, { data: returnParams })
+        const result = await lineNotifySubscribe({ data: returnParams })
         this.userInfo.isNotify = result.data.success
 
         return result
@@ -60,19 +60,13 @@ export const useUserStore = defineStore({
       }
     },
     async cancelNotify() {
-      const token = localStorage.getItem("token")
-      if (token) {
-        const api = `${import.meta.env.VITE_BACKEND_HOST}/line/notify/cancel`
-        axios.defaults.headers.post['Authorization'] = token;
-        const result = await axios.post(api)
-      }
+      const result = await lineNotifyCancel()
       this.userInfo.isNotify = false
     },
     async lineLoginHandler(returnParams) {
       if (!returnParams.code || !returnParams.state) return
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/login`
       try {
-        const result = await axios.post(api, { data: returnParams })
+        const result = await lineLogin({ data: returnParams })
         if (!result.data.success || !result.headers.authorization) {
           this.isLogin = false
           return
@@ -92,9 +86,7 @@ export const useUserStore = defineStore({
       }
     },
     async logoutHandler() {
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/logout`
-      axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
-      const result = await axios.post(api)
+      const result = await lineLogout()
 
       this.isLogin = false
       this.token = ""
@@ -105,32 +97,26 @@ export const useUserStore = defineStore({
       const token = localStorage.getItem("token")
       const role = localStorage.getItem("role")
       if (token && !role) {
-        const api = `${import.meta.env.VITE_BACKEND_HOST}/user/userInfo`
-        axios.defaults.headers.post['Authorization'] = token;
-        const result = await axios.post(api)
+        const result = await getUserInfo()
         this.isLogin = result.data.success
         this.userInfo = result.data.userInfo
         return
       }
       if (token && role) {
         this.adminLogin()
-        return 
+        return
       }
       this.isLogin = false
     },
     async postNotify() {
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/line/notify/post`
-      axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
-      const result = await axios.post(api)
+      const result = await linePostNotify()
     },
     async adminLogin() {
-      const api = `${import.meta.env.VITE_BACKEND_HOST}/admin/login`
       const payload = {
         adminAccount: this.adminAccount,
         adminPassword: this.adminPassword
       }
-      axios.defaults.headers.post['Authorization'] = localStorage.getItem("token");
-      const result = await axios.post(api, { data: payload })
+      const result = await adminLogin({ data: payload })
       if (result.data.success) {
         const token = result.headers.authorization.split(" ")[1]
         localStorage.setItem("token", token)
@@ -142,6 +128,7 @@ export const useUserStore = defineStore({
       return result.data.success
     },
     async adminLogout() {
+      const result = await adminLogout()
       this.isLogin = false
       this.userInfo = {}
       localStorage.removeItem("token")

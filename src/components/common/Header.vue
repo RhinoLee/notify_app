@@ -12,6 +12,8 @@ const { isLogin, userInfo, adminAccount, adminPassword } = storeToRefs(userStore
 async function adminLogin() {
   const result = await userStore.adminLogin()
   if (result) {
+    userStore.adminAccount = ""
+    userStore.adminPassword = ""
     loginModal.click()
   }
 }
@@ -99,7 +101,7 @@ async function adminLogin() {
               </div>
               <div class="mb-3">
                 <label for="password" class="col-form-label">Password:</label>
-                <input type="text" class="form-control" id="password" v-model.trim="adminPassword" />
+                <input type="text" class="form-control" id="password" v-model.trim="adminPassword" @keyup.enter="adminLogin" />
               </div>
             </form>
           </div>

@@ -146,7 +146,6 @@ const userController = {
   lineLogin: async (req, res) => {
     let json;
     const { code } = req.body.data
-    // access_token, token_type, refresh_token, expires_in, scope, id_token
     const { access_token } = await getLoginAccessToken(code)
 
     if (!access_token) {
@@ -171,7 +170,8 @@ const userController = {
           userInfo: {
             displayName,
             pictureUrl,
-            role: 0
+            role: 0,
+            isNotify: Boolean(updateUserResult.rows[0].notify_access_token)
           }
         }
         res.setHeader("Access-Control-Expose-Headers", "Authorization")
@@ -198,7 +198,8 @@ const userController = {
         userInfo: {
           displayName,
           pictureUrl,
-          role: 0
+          role: 0,
+          isNotify: false
         }
       }
       res.setHeader("Access-Control-Expose-Headers", "Authorization")
@@ -369,6 +370,24 @@ const userController = {
     json = {
       success: false
     }
+    return res.status(400).json(json)
+  },
+  adminLogout: async (req, res) => {
+    let json;
+    const token = req.header("authorization")
+    const result = await userModel.adminLogout(token)
+    if (result) {
+      json = {
+        success: true
+      }
+
+      return res.status(200).json(json)
+    }
+
+    json = {
+      success: false
+    }
+
     return res.status(400).json(json)
   }
 }

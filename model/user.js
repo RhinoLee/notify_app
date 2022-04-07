@@ -20,7 +20,7 @@ const userModel = {
   },
   updateLineUserToken: async ({ access_token, user_platform_id }) => {
     const query = {
-      text: `UPDATE users SET login_access_token = $1 WHERE user_platform_id = $2`,
+      text: `UPDATE users SET login_access_token = $1 WHERE user_platform_id = $2 RETURNING *`,
       values: [access_token, user_platform_id]
     }
 
@@ -155,6 +155,21 @@ const userModel = {
       return err
     }
   },
+  adminLogout: async (token) => {
+    const query = {
+      text: `UPDATE users SET login_access_token = $1 WHERE login_access_token = $2 AND role = $3 RETURNING *`,
+      values: [null, token, 1]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.adminLogout result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.adminLogout err", err);
+      return err
+    }
+  },
   updateAdminToken: async (token) => {
     const query = {
       text: `UPDATE users SET login_access_token = $1 WHERE role = $2 RETURNING *`,
@@ -184,7 +199,8 @@ const userModel = {
       console.log("userModel.verifyAdminUser err", err);
       return err
     }
-  }
+  },
+
 }
 
 module.exports = userModel

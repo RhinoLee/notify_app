@@ -72,6 +72,7 @@ app.post("/line/notify/post", getAdminReqToken, userController.lineNotifyPost)
 app.post("/line/notify/cancel", getReqToken, userController.cancelNotify)
 
 app.post("/admin/login", userController.adminLogin)
+app.post("/admin/logout", getAdminReqToken, userController.adminLogout)
 
 app.listen(port, () => {
   db.connect();

@@ -19,7 +19,7 @@ if (process.env.NODE_ENV == "development") {
 } 
 
 if (process.env.NODE_ENV != "development") {
-  const pool = new Pool({
+  pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false,

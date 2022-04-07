@@ -170,7 +170,8 @@ const userController = {
           success: true,
           userInfo: {
             displayName,
-            pictureUrl
+            pictureUrl,
+            role: 0
           }
         }
         res.setHeader("Access-Control-Expose-Headers", "Authorization")
@@ -196,9 +197,11 @@ const userController = {
         success: true,
         userInfo: {
           displayName,
-          pictureUrl
+          pictureUrl,
+          role: 0
         }
       }
+      res.setHeader("Access-Control-Expose-Headers", "Authorization")
       res.setHeader('Authorization', 'Bearer ' + token);
       return res.status(200).json(json)
     }
@@ -234,6 +237,7 @@ const userController = {
     const access_token = result.rows[0].login_access_token
     const userInfo = await getUserLineInfo(access_token)
     userInfo.isNotify = Boolean(result.rows[0].notify_access_token)
+    userInfo.role = 0
     json = {
       success: true,
       userInfo
@@ -303,7 +307,7 @@ const userController = {
 
     json = {
       success: false,
-      err: "no user exist"
+      err: "no user subscribe"
     }
     return res.status(400).json(json)
   },
@@ -330,6 +334,43 @@ const userController = {
       return res.status(400).json(json)
     }
   },
+  adminLogin: async (req, res) => {
+    let json;
+    let result;
+    const { adminAccount, adminPassword } = req.body.data
+    const token = req.header("authorization") || false
+
+    if (adminAccount && adminPassword) {
+      result = await userModel.adminLogin({ role: 1, adminAccount, adminPassword })
+    }
+    if (!result && token) {
+      result = await userModel.verifyAdminUser(token)
+    }
+
+    if (result.rowCount === 1) {
+      const token = tokenHandler.createAdminToken()
+      const updateTokenResult = await userModel.updateAdminToken(token)
+
+      if (updateTokenResult.rowCount === 1) {
+        json = {
+          success: true,
+          role: 1
+        }
+        res.setHeader("Access-Control-Expose-Headers", "Authorization")
+        res.setHeader('Authorization', 'Bearer ' + token);
+        return res.status(200).json(json)
+      }
+
+      json = {
+        success: false,
+      }
+      return res.status(400).json(json)
+    }
+    json = {
+      success: false
+    }
+    return res.status(400).json(json)
+  }
 }
 
 module.exports = userController

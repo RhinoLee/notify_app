@@ -106,6 +106,84 @@ const userModel = {
       console.log("userModel.getNotifyUsers err", err);
       return err
     }
+  },
+  createSeedAdminUser: async ({ account, password, role }) => {
+    const query = {
+      text: `INSERT INTO 
+              users (account, password, role)
+              VALUES($1, $2, $3) RETURNING *`,
+      values: [account, password, role]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.createSeedAdminUser result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.createSeedAdminUser err", err);
+      return err
+    }
+  },
+  findAdminUser: async (role) => {
+    const query = {
+      text: "SELECT id FROM users WHERE role = $1",
+      values: [role]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.findAdminUser result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.findAdminUser err", err);
+      return err
+    }
+
+  },
+  adminLogin: async ({ role, adminAccount, adminPassword }) => {
+    const query = {
+      text: "SELECT id FROM users WHERE role = $1 AND account = $2 AND password = $3",
+      values: [role, adminAccount, adminPassword]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.adminLogin result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.adminLogin err", err);
+      return err
+    }
+  },
+  updateAdminToken: async (token) => {
+    const query = {
+      text: `UPDATE users SET login_access_token = $1 WHERE role = $2 RETURNING *`,
+      values: [token, 1]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.updateAdminToken result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.updateAdminToken err", err);
+      return err
+    }
+  },
+  verifyAdminUser: async (token) => {
+    const query = {
+      text: "SELECT id, account, role FROM users WHERE role = $1 AND login_access_token = $2",
+      values: [1, token]
+    }
+
+    try {
+      const result = await db.query(query)
+      console.log("userModel.verifyAdminUser result", result);
+      return result
+    } catch (err) {
+      console.log("userModel.verifyAdminUser err", err);
+      return err
+    }
   }
 }
 

@@ -9,9 +9,17 @@ dotenv.config();
 //   database: process.env.DB_DATABASE,
 //   password: process.env.DB_PASSWORD,
 // });
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-})
+if (process.env.NODE_ENV === "development") {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  })
+} else {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  })
+}
 
 module.exports = pool;

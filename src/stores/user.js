@@ -12,14 +12,14 @@ export const useUserStore = defineStore({
     lineLoginParams: {
       response_type: "code",
       client_id: import.meta.env.VITE_LINE_CLIENT_ID,
-      redirect_uri: "http://localhost:3000/login/line/return",
+      redirect_uri: `${import.meta.env.VITE_BASE_HOST}/login/line/return`,
       state: "12345",
       scope: "profile openid email",
     },
     lineNotifyParams: {
       response_type: "code",
       client_id: import.meta.env.VITE_LINE_NOTIFY_ID,
-      redirect_uri: "http://localhost:3000/notify/line/return",
+      redirect_uri: `${import.meta.env.VITE_BASE_HOST}/notify/line/return`,
       state: "12345",
       scope: "notify",
     },

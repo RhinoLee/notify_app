@@ -1,3 +1,4 @@
+const https = require('https');
 const axios = require("axios")
 const cheerio = require('cheerio');
 const { randomBytes } = require("crypto");
@@ -10,8 +11,14 @@ const jokeController = {
       bsn: 60555,
       snA: 3105
     }
+
+    const agent = new https.Agent({
+      rejectUnauthorized: false
+    });
+
+    const result = await axios.get(api, { params, httpsAgent: agent },)
+
     const jokes = []
-    const result = await axios.get(api, { params })
     const $ = cheerio.load(`${result.data}`);
     const q = $(".c-article__content > div").eq(3).children("div").length
     const regexpQ = /^[0-9].+/gm
@@ -36,11 +43,12 @@ const jokeController = {
 
     const jokesLength = jokes.length
     if (jokesLength > 0) {
-      const randomNum = Math.ceil(Math.random(jokesLength))
+      const randomNum = Math.ceil(Math.random() * jokesLength - 1)
+      console.log("randomNum", randomNum);
       return jokes[randomNum]
     }
 
-    
+
     return false
   }
 }

@@ -4,7 +4,7 @@
   "description": "OAuth2.0 practice",
   "main": "index.js",
   "scripts": {
-    "start": "npm run migrate up && nodemon index.js",
+    "start": "npm run migrate up && node index.js",
     "migrate": "node-pg-migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

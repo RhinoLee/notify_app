@@ -5,7 +5,7 @@ const { randomBytes } = require("crypto");
 const jokeController = {
   getJokes: async (res, req) => {
     let json;
-    const api = `https://forum.gamer.com.tw/C.php`
+    const api = `http://forum.gamer.com.tw/C.php`
     const params = {
       bsn: 60555,
       snA: 3105

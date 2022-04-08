@@ -9,7 +9,7 @@ async function getLoginAccessToken(code) {
   const params = {
     grant_type: "authorization_code",
     code,
-    redirect_uri: "http://localhost:3000/login/line/return",
+    redirect_uri: `${process.env.CLIENT_ORIGIN}/login/line/return`,
     client_id: process.env.LINE_LOGIN_ID,
     client_secret: process.env.LINE_LOGIN_SECRET,
   }
@@ -36,7 +36,7 @@ async function getNotifyAccessToken(code) {
   const params = {
     grant_type: "authorization_code",
     code,
-    redirect_uri: "http://localhost:3000/notify/line/return",
+    redirect_uri: `${process.env.CLIENT_ORIGIN}/notify/line/return`,
     client_id: process.env.LINE_NOTIFY_ID,
     client_secret: process.env.LINE_NOTIFY_SECRET,
   }

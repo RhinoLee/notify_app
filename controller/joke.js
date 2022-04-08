@@ -42,7 +42,7 @@ const jokeController = {
         return jokes[randomNum]
       }
     } catch (err) {
-      console.log(err);
+      console.log("jokeController", err);
       return false
     }
   }

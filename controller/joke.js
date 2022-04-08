@@ -1,5 +1,6 @@
 const axios = require("axios")
 const cheerio = require('cheerio');
+const fakeUa = require('fake-useragent');
 const { randomBytes } = require("crypto");
 
 const jokeController = {
@@ -10,8 +11,15 @@ const jokeController = {
       bsn: 60555,
       snA: 3105
     }
+    const headers = {
+      'User-Agent': fakeUa()
+    };
+    let config = {
+      headers,
+      params
+    }
     try {
-      const result = await axios.get(api, { params })
+      const result = await axios.get(api, config)
       const jokes = []
       const $ = cheerio.load(`${result.data}`);
       const q = $(".c-article__content > div").eq(3).children("div").length

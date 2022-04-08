@@ -14,6 +14,6 @@ git add -A
 git commit -m 'deploy'
 
 # 如果你要部署在 https://<USERNAME>.github.io/<REPO>
-git push -f https://github.com/RhinoLee/line-notify-frontend.git main:gh-pages
+git push -f https://github.com/RhinoLee/line-notify-frontend.git master:gh-pages
 
 cd -

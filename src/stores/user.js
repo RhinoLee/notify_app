@@ -34,6 +34,7 @@ export const useUserStore = defineStore({
       const loginUrl = new URL(import.meta.env.VITE_LINE_LOGIN_ENDPOINT)
       const searchParams = new URLSearchParams(state.lineLoginParams)
       loginUrl.search = searchParams
+      console.log("loginUrl.href", loginUrl.href);
       return loginUrl.href
     },
     lineNotifyUrl(state) {

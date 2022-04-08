@@ -1,4 +1,5 @@
 const userModel = require("../model/user");
+const jokeController = require("./joke")
 const tokenHandler = require("../utils/token")
 const axios = require("axios")
 
@@ -113,6 +114,9 @@ async function lineCancelNotify(access_token) {
 
 async function notifyPost(tokens) {
   let promises = []
+  const joke = await jokeController.getJokes()
+  console.log("joke", joke);
+  const message = joke.q + " " + joke.a || "現在沒笑話"
   tokens.forEach(async (token) => {
     console.log("token", token);
     const headers = {
@@ -121,7 +125,7 @@ async function notifyPost(tokens) {
     }
 
     const params = {
-      message: "yoyo"
+      message
     }
 
     const searchParams = new URLSearchParams()

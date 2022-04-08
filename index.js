@@ -9,6 +9,7 @@ const jsonParser = bodyParser.json();
 
 const userModel = require("./model/user");
 const userController = require("./controller/user");
+const jokeController = require("./controller/joke")
 
 const tokenHandler = require("./utils/token")
 const seedUtils = require("./utils/seed")
@@ -73,6 +74,8 @@ app.post("/line/notify/cancel", getReqToken, userController.cancelNotify)
 
 app.post("/admin/login", userController.adminLogin)
 app.post("/admin/logout", getAdminReqToken, userController.adminLogout)
+
+app.get("/joke", jokeController.getJokes)
 
 app.listen(port, () => {
   db.connect();

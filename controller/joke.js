@@ -3,6 +3,8 @@ const axios = require("axios")
 const cheerio = require('cheerio');
 const { randomBytes } = require("crypto");
 
+https.globalAgent.options.rejectUnauthorized = false;
+
 const jokeController = {
   getJokes: async (res, req) => {
     let json;
@@ -12,11 +14,7 @@ const jokeController = {
       snA: 3105
     }
 
-    const agent = new https.Agent({
-      rejectUnauthorized: false
-    });
-
-    const result = await axios.get(api, { params, httpsAgent: agent },)
+    const result = await axios.get(api, { params } )
 
     const jokes = []
     const $ = cheerio.load(`${result.data}`);
